@@ -1,0 +1,28 @@
+[project]
+name = "llm-huggingface-local"
+version = "0.1"
+description = "LLM plugin for running models using Huggingface Transformers locally"
+readme = "README.md"
+authors = [{name = "Jonas Blahut"}]
+license = {text = "Apache-2.0"}
+classifiers = [
+    "License :: OSI Approved :: Apache Software License"
+]
+dependencies = [
+    "llm",
+    "httpx",
+    "transformers",
+    "huggingface_hub"
+]
+
+[project.urls]
+Homepage = "https://github.com/darkphoenix/llm-huggingface-local"
+Changelog = "https://github.com/darkphoenix/llm-huggingface-local/releases"
+Issues = "https://github.com/darkphoenix/llm-huggingface-local/issues"
+CI = "https://github.com/darkphoenix/llm-huggingface-local/actions"
+
+[project.entry-points.llm]
+huggingface_local = "llm_huggingface_local"
+
+[project.optional-dependencies]
+test = ["pytest"]
