@@ -143,7 +143,10 @@ class HuggingfaceModel(llm.Model):
             description="Whether to print verbose output from the model", default=False
         )
         max_tokens: int = Field(
-            description="Max tokens to return, defaults to 4000", default=4000
+            description="Max tokens to return, defaults to 20", default=20
+        )
+        quantise_bits: int = Field(
+            description="Bits to quantise model down to, 0 disables quantisation", default=0
         )
 
     def __init__(self, model_id):
@@ -155,9 +158,25 @@ class HuggingfaceModel(llm.Model):
             hf_home = _ensure_hf_home()
             import transformers
             transformers.logging.set_verbosity_error()
-            transformers.logging.disable_progress_bar()
+            #transformers.logging.disable_progress_bar()
             if self.pipe == None:
-                self.pipe = transformers.pipeline("text-generation", model=self.model_id, model_kwargs={'cache_dir':hf_home})
+                if prompt.options.quantise_bits == 0:
+                    self.pipe = transformers.pipeline("text-generation", model=self.model_id, model_kwargs={'cache_dir':hf_home})
+                else:
+                    #Load model and data for inference
+                    if prompt.options.quantise_bits == 4:
+                        bab_config = transformers.BitsAndBytesConfig(
+                            load_in_4bit=True
+                        )
+                    elif prompt.options.quantise_bits == 8:
+                        bab_config = transformers.BitsAndBytesConfig(
+                            load_in_8bit=True
+                        )
+                    else:
+                        raise click.ClickException('Invalid bit count for quantisation')
+                    tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_id)
+                    model = transformers.AutoModelForCausalLM.from_pretrained(self.model_id, quantization_config=bab_config)
+                    self.pipe = transformers.pipeline("text-generation", model=model, tokenizer=tokenizer, model_kwargs={'cache_dir':hf_home})
             yield self.pipe(prompt.prompt, max_new_tokens=prompt.options.max_tokens)[0]['generated_text']
 
 
